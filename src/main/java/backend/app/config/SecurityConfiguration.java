@@ -20,19 +20,33 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Disable CSRF as JWTs are used (stateless)
+
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/v1/auth/**").permitAll() // Public endpoints
-                        .requestMatchers("/api/v1/demo/admin/**").hasAuthority("ROLE_ADMIN") // Only Admin endpoints
-                        .requestMatchers("/api/v1/demo/user/**").hasAuthority("ROLE_USER") // Only User endpoints
-                        .anyRequest().authenticated() // Any other request must be authenticated
+                        // Public endpoints that do not require authentication
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+
+                        // Endpoints that are only accessible by users with the ROLE_ADMIN authority
+                        .requestMatchers("/api/v1/demo/admin/**").hasAuthority("ROLE_ADMIN")
+
+                        // Endpoints that are only accessible by users with the ROLE_USER authority
+                        .requestMatchers("/api/v1/demo/user/**").hasAuthority("ROLE_USER")
+
+                        // Any other request must be authenticated
+                        .anyRequest().authenticated()
                 )
+
                 .sessionManagement(sessionManagement -> sessionManagement
+                        // Configure session management to be stateless
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
+                // Set the custom authentication provider
                 .authenticationProvider(authenticationProvider)
+
+                // Add the custom JWT authentication filter before the default UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+        return http.build(); // Build and return the SecurityFilterChain
     }
 }
