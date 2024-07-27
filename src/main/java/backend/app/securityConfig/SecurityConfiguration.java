@@ -1,4 +1,4 @@
-package backend.app.config;
+package backend.app.securityConfig;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,14 +23,10 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable()) // Disable CSRF as JWTs are used (stateless)
 
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        // Public endpoints that do not require authentication
                         .requestMatchers("/api/v1/auth/**").permitAll()
-
-                        // Endpoints that are only accessible by users with the ROLE_ADMIN authority
-                        .requestMatchers("/api/v1/demo/admin/**").hasAuthority("ROLE_ADMIN")
-
-                        // Endpoints that are only accessible by users with the ROLE_USER authority
-                        .requestMatchers("/api/v1/demo/user/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/v1/**").permitAll()
 
                         // Any other request must be authenticated
                         .anyRequest().authenticated()

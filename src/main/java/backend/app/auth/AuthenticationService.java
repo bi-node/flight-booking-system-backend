@@ -1,8 +1,7 @@
 package backend.app.auth;
 
-import backend.app.config.JwtService;
+import backend.app.securityConfig.JwtService;
 import backend.app.repository.UserRepository;
-import backend.app.user.Role;
 import backend.app.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +21,12 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterRequest request) {
-        var user= User.builder()
+        // Check if user with the same email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        var user = User.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
@@ -31,20 +35,20 @@ public class AuthenticationService {
                 .build();
 
         userRepository.save(user);
-        var jwtToken=jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-    authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                    request.getEmail(), request.getPassword()
-            )
-    );
-    var user=userRepository.findByEmail(request.getEmail()).orElseThrow();
-        var jwtToken=jwtService.generateToken(user);
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(), request.getPassword()
+                )
+        );
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
